@@ -1,0 +1,12 @@
+node_modules
+npm-debug.log
+.DS_Store
+.env
+
+# My Stuffs
+/my-scripts
+/my-stuffs
+/env-files
+/env
+coverage
+.nyc_output

@@ -1,0 +1,2 @@
+// Run test for one it()
+npm test -- -g "should return posts etc..."
