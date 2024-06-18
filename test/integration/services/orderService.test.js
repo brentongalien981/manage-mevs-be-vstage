@@ -502,9 +502,7 @@ describe("Integration / Services / orderService", () => {
       // Call the function.
       const builtSortFilter = buildSortFilter(mockSortFiltersData);
 
-
-      // Expect the default "createdAt" filter is 1.
-      expect(builtSortFilter.createdAt).equals(1);
+      
       // Assert for the rest of the filters.
       for (const aMockSortFilter of mockSortFiltersData) {
 

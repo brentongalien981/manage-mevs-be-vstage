@@ -90,7 +90,7 @@ async function buildOrderQueryFilter(orderFilters) {
 }
 
 
-function buildSortFilter(sortFiltersData) {
+function buildSortFilter(sortFiltersData = []) {
 
   let builtSortFilter = null;
 

@@ -6,7 +6,7 @@ require('dotenv').config();
 const connectDB = async () => {
 
   if (process.env.NODE_ENV === "test") {
-    console.log("test env... Skipping mongodb connection.");
+    console.log("Running with test env... Skipping mongodb connection.");
     return;    
   }
 

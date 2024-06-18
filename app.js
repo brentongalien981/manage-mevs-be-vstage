@@ -7,11 +7,13 @@ var logger = require('morgan');
 const connectDB = require('./src/config/db');
 
 
-var indexRouter = require('./src/routes/index');
-var usersRouter = require('./src/routes/users');
+const indexRouter = require('./src/routes/index');
+const usersRouter = require('./src/routes/users');
 const ordersRouter = require('./src/routes/orders');
+const authRouter = require('./src/routes/auth');
 
 
+const authMiddleware = require("./src/middlewares/authMiddleware");
 const errorHandlerMiddleware = require("./src/middlewares/errorHandlerMiddleware");
 const notFoundErrorHandlerMiddleware = require("./src/middlewares/notFoundErrorHandlerMiddleware");
 
@@ -32,9 +34,15 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 
+// Set custom middlewares.
+app.use(authMiddleware.authenticate);
+
+
+// Set routes.
 app.use('/', indexRouter);
 app.use('/users', usersRouter);
 app.use('/orders', ordersRouter);
+app.use('/auth', authRouter);
 
 
 // Set default error handler middlewares.
