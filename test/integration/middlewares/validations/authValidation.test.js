@@ -5,7 +5,7 @@ const app = require("../../../../app");
 const spies = require("chai-spies");
 const My = require("../../../../src/utils/My");
 const MyMultipleValidationErrors = require("../../../../src/errors/MyMultipleValidationErrors");
-const { SIGNUP_KEY_EQUALITY_VALIDATION_ERROR_MSG } = require("../../../../src/utils/validators/UserValidator");
+const { SIGNUP_KEY_EQUALITY_VALIDATION_ERROR_MSG, PASSWORD_REGEX_VALIDATION_ERROR_MSG } = require("../../../../src/utils/validators/UserValidator");
 
 chai.use(chaiHttp);
 chai.use(spies);
@@ -22,6 +22,8 @@ describe("Integration / Middlewares / Validations / authValidation", () => {
       const response = await chai.request(app)
         .post("/auth/signup")
         .send({
+          email: "valid@email.com",
+          password: "validPassword3#",
           signupKey: "invalid-key"
         });
 
@@ -41,6 +43,7 @@ describe("Integration / Middlewares / Validations / authValidation", () => {
       const response = await chai.request(app)
         .post("/auth/signup")
         .send({
+          password: "validaPassword3#",
           signupKey: process.env.SIGNUP_KEY
         });
 
@@ -49,7 +52,58 @@ describe("Integration / Middlewares / Validations / authValidation", () => {
       expect(response).to.not.have.status(401);
       expect(response.body.multipleErrorsObj).to.not.exist;
 
-    });    
+    });
+
+
+    it("should respond with JSON that has property: multipleErrorsObj if password is invalid", async () => {
+
+      // Make the request.
+      const response = await chai.request(app)
+        .post("/auth/signup")
+        .send({
+          email: "valid@email.com",
+          password: "invalid-password",
+          signupKey: process.env.SIGNUP_KEY
+        });
+
+
+      // Expect
+      expect(response).to.have.status(401);
+      expect(response.body.multipleErrorsObj).to.exist;
+      expect(response.body.multipleErrorsObj.name).equals(MyMultipleValidationErrors.name);
+      expect(response.body.multipleErrorsObj.errors.length).equals(1);
+
+      const errors = response.body.multipleErrorsObj.errors;
+
+      for (const e of errors) {
+        if (e.path === "password") {
+          expect(e.msg).equals(PASSWORD_REGEX_VALIDATION_ERROR_MSG);
+        }
+      }
+
+    });
+
+
+    it("should fail if password is not provided", async () => {
+
+      // Make the request.
+      const response = await chai.request(app)
+        .post("/auth/signup")
+        .send({
+          email: "valid@email.com",
+          signupKey: process.env.SIGNUP_KEY
+        });
+
+
+      // Expect
+      expect(response).to.have.status(401);
+      expect(response.body.multipleErrorsObj).to.exist;
+      expect(response.body.multipleErrorsObj.name).equals(MyMultipleValidationErrors.name);
+      // There should be 3 errors:
+      // password required, minLength, and invalid.
+      expect(response.body.multipleErrorsObj.errors.length).equals(3);
+
+    });
 
   });
 

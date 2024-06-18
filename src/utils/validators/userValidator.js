@@ -66,9 +66,11 @@ const signupKeyValidators = [
 
 module.exports = {
   SIGNUP_KEY_EQUALITY_VALIDATION_ERROR_MSG,
+  PASSWORD_REGEX_VALIDATION_ERROR_MSG,
   emailMinLengthValidator,
   emailMaxLengthValidator,
   emailRegexValidator,
+  passwordRegexValidator,
   signupKeyEqualityValidator,
   emailValidators,
   passwordValidators,

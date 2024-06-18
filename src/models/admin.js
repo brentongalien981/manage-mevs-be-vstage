@@ -1,5 +1,5 @@
 const mongoose = require("mongoose");
-const { emailMinLengthValidator, emailMaxLengthValidator, emailValidators, passwordValidators } = require("../utils/validators/UserValidator");
+const { emailMinLengthValidator, emailMaxLengthValidator, emailValidators } = require("../utils/validators/UserValidator");
 
 
 const adminSchema = new mongoose.Schema({
@@ -16,9 +16,7 @@ const adminSchema = new mongoose.Schema({
     type: String,
     required: true,
     trim: true,
-    minLength: 8,
-    maxLength: 64,
-    validate: passwordValidators
+    minLength: 8
   }
 }, { timestamps: true });
 
