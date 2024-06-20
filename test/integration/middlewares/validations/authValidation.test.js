@@ -43,6 +43,7 @@ describe("Integration / Middlewares / Validations / authValidation", () => {
       const response = await chai.request(app)
         .post("/auth/signup")
         .send({
+          email: "valid@email.com",
           password: "validaPassword3#",
           signupKey: process.env.SIGNUP_KEY
         });
@@ -99,8 +100,7 @@ describe("Integration / Middlewares / Validations / authValidation", () => {
       expect(response).to.have.status(401);
       expect(response.body.multipleErrorsObj).to.exist;
       expect(response.body.multipleErrorsObj.name).equals(MyMultipleValidationErrors.name);
-      // There should be 3 errors:
-      // password required, minLength, and invalid.
+      // There should be 3 errors: password required, minLength, and invalid.
       expect(response.body.multipleErrorsObj.errors.length).equals(3);
 
     });
