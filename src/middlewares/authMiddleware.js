@@ -7,6 +7,8 @@ const authMiddleware = {
 
   authenticate: async (req, res, next) => {
 
+    // TODO: Delete.
+    await My.sleep(1000);
     // Init the default logged-in state to false.
     req.isLoggedIn = false;
 

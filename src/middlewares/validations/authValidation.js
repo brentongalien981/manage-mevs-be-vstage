@@ -1,11 +1,14 @@
 const { body, validationResult } = require("express-validator");
 const multipleErrorsErrorHandlerMiddleware = require("../multipleErrorsErrorHandlerMiddleware");
 const { signupKeyEqualityValidator, SIGNUP_KEY_EQUALITY_VALIDATION_ERROR_MSG, passwordRegexValidator, PASSWORD_REGEX_VALIDATION_ERROR_MSG } = require("../../utils/validators/UserValidator");
+const MyExpressValidatorError = require("../../errors/MyExpressValidatorError");
 
 const authValidation = {
 
   signup: [
     // Validate signupKey
+    // Temporarily disabled the signupKey validation. 
+    // Uncomment the code below to enable it.
     body("signupKey").trim().escape()
       .notEmpty().withMessage("Signup Key is required")
       .custom((value) => {
@@ -46,7 +49,8 @@ function handleSignupValidation(req, res, next) {
 
   // On error
   if (!errors.isEmpty()) {
-    return multipleErrorsErrorHandlerMiddleware(req, res, next, errors.array());
+    const err = new MyExpressValidatorError({ validationErrors: errors.array() });
+    return multipleErrorsErrorHandlerMiddleware(err, req, res, next);
   }
 
   // On success    

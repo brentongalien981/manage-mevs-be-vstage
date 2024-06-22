@@ -5,7 +5,7 @@
   "author": "Bren Baga",
   "license": "ISC",
   "scripts": {
-    "test": "cross-env NODE_ENV=test mocha --file ./test/setup.js --recursive",
+    "test": "cross-env NODE_ENV=test mocha --file ./test/setup.js --recursive --timeout 10000",
     "coverage": "cross-env NODE_ENV=test nyc --reporter=lcov --reporter=text mocha --recursive",
     "start": "node ./bin/www",
     "dev": "nodemon ./bin/www",

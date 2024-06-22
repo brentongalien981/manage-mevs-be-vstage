@@ -1,21 +1,16 @@
-const MyMultipleValidationErrors = require("../errors/MyMultipleValidationErrors");
+function multipleErrorsErrorHandlerMiddleware(err, req, res, next) {
 
-function multipleErrorsErrorHandlerMiddleware(req, res, next, errors = []) {
+  if (process.env.NODE_ENV === "development") {
+    console.log("\n\n\n############################################");
+    console.log("MyError: Multiple Errors");
+    console.log("############################################");
 
-  // Logging the error for debugging purposes
-  // console.log("\n\n\n##################################");
-  // console.log("MyError: Multiple Errors");
-  // console.log("############################################");
-
-  // console.error(err.stack);
-
+    console.error(err);
+  }
 
   // Sending an appropriate HTTP status code and error message to the client
-  const error = new MyMultipleValidationErrors();
-  error.errors = errors;
-
-  return res.status(error.status).json({
-    multipleErrorsObj: error
+  return res.status(err.status).json({
+    multipleErrorsObj: err
   });
 }
 
