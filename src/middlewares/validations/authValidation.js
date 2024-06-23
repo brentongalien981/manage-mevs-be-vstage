@@ -6,9 +6,21 @@ const MyExpressValidatorError = require("../../errors/MyExpressValidatorError");
 const authValidation = {
 
   signup: [
-    // Validate signupKey
-    // Temporarily disabled the signupKey validation. 
-    // Uncomment the code below to enable it.
+    validateSingupKey(),
+    validatePassword(),
+    handleValidationResults
+  ],
+
+  login: [
+    validatePassword(),
+    handleValidationResults
+  ]
+
+};
+
+
+function validateSingupKey() {
+  return [
     body("signupKey").trim().escape()
       .notEmpty().withMessage("Signup Key is required")
       .custom((value) => {
@@ -19,9 +31,13 @@ const authValidation = {
         }
 
         return true;
-      }),
+      })
+  ];
+}
 
-    // Validate password
+
+function validatePassword() {
+  return [
     body("password").trim().escape()
       .notEmpty().withMessage("Password is required")
       .isLength({ min: 8 }).withMessage("Password must be at least 8 characters")
@@ -34,17 +50,13 @@ const authValidation = {
         }
 
         return true;
-      }),
-
-    // Check for validation errors
-    handleSignupValidation
-  ]
-
-};
+      })
+  ];
+}
 
 
 
-function handleSignupValidation(req, res, next) {
+function handleValidationResults(req, res, next) {
   const errors = validationResult(req);
 
   // On error

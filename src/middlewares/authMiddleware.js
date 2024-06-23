@@ -6,13 +6,11 @@ const My = require("../utils/My");
 const authMiddleware = {
 
   authenticate: async (req, res, next) => {
-
-    // TODO: Delete.
-    await My.sleep(1000);
+    
     // Init the default logged-in state to false.
     req.isLoggedIn = false;
 
-    // TODO: Re-code this when using authMiddleware.isLoggedIn.
+    // NOTE: Re-code this when using authMiddleware.isLoggedIn.
     // // Extract the value of the Authorization header
     // const authHeader = req.headers?.authorization;
 

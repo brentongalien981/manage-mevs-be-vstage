@@ -21,7 +21,28 @@ const authService = {
       email: newAdmin.email,
       token
     };
+  },
+
+  login: async (req) => {
+
+    const email = req.body.email;
+    let token = null;
+
+    const admin = await Admin.findOne({ email: email });
+
+    // If admin is found.
+    if (admin) {
+      const isPasswordValid = await bcrypt.compare(req.body.password, admin.password);
+
+      if (isPasswordValid) {
+        // Generate JWT token.
+        token = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: "7d" });
+      }
+    }
+
+    return { token, email };
   }
+
 };
 
 
