@@ -7,6 +7,7 @@ const orderService = require("../../../src/services/orderService");
 const { getRandomOrderStatus } = require("../../../src/factories/orderStatusFactory");
 const OrderStatus = require("../../../src/models/orderStatus");
 const { buildSortFilter } = require("../../../src/services/orderService");
+const OrderItem = require("../../../src/models/orderItem");
 require("../../setup");
 const { expect } = chai;
 
@@ -430,19 +431,19 @@ describe("Integration / Services / orderService", () => {
 
       for (let i = 0; i < queriedOrders.length; i++) {
         const currentOrder = queriedOrders[i];
-        
+
         if (i === 0) {
           continue;
         }
 
-        const previousOrder = queriedOrders[i-1];
+        const previousOrder = queriedOrders[i - 1];
 
         let myBool = currentOrder.firstName >= previousOrder.firstName;
         expect(myBool).equals(true); // ascending
 
         myBool = currentOrder.city < previousOrder.city;
         expect(myBool).equals(true); // descending
-        
+
       }
 
     });
@@ -502,7 +503,7 @@ describe("Integration / Services / orderService", () => {
       // Call the function.
       const builtSortFilter = buildSortFilter(mockSortFiltersData);
 
-      
+
       // Assert for the rest of the filters.
       for (const aMockSortFilter of mockSortFiltersData) {
 
@@ -539,6 +540,41 @@ describe("Integration / Services / orderService", () => {
         expect(builtSortFilter[filterName]).equals(filterSortValue);
       }
 
+    });
+
+  });
+
+
+  describe("orderService.calculateTotalAmount", () => {
+
+    it("should calculate the total amount of an order", async () => {
+
+      // Generate relevant objects.
+      await generateDefaultCollections();
+      const generatedOrders = await generateOrders(5);
+
+      // Loop through the generated orders.
+      for (const generatedOrder of generatedOrders) {
+
+        // Query the order.
+        const queriedOrder = await Order.findById(generatedOrder.id).populate("orderItems");
+
+        // Calculate the total of queriedOrder.
+        let subtotal = 0;
+        for (const orderItem of queriedOrder.orderItems) {
+          subtotal += (orderItem.price * orderItem.quantity);
+        }
+        let total = (subtotal + queriedOrder.shippingFee) * (1 + orderService.TAX_RATE);
+        total = parseFloat(total.toFixed(2));
+
+
+        // Call the service.
+        let calculatedTotalAmount = await orderService.calculateTotalAmount(generatedOrder);
+        calculatedTotalAmount = parseFloat(calculatedTotalAmount.toFixed(2));
+
+        // Expect 
+        expect(total).equals(calculatedTotalAmount);
+      }
     });
 
   });

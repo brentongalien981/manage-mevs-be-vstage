@@ -1,9 +1,11 @@
 const Order = require("../models/order");
+const OrderItem = require("../models/orderItem");
 const OrderStatus = require("../models/orderStatus");
 const My = require("../utils/My");
 
 
 const NUM_DATA_PER_PAGE = 10;
+const TAX_RATE = 0.13;
 
 
 const orderService = {
@@ -121,6 +123,31 @@ function getNumDataToSkip(pageNavigatorData) {
 }
 
 
+async function calculateTotalAmount(order) {
+  let subtotal = await calculateOrderItemsSubtotal(order);
+  subtotal += order.shippingFee;
+  const tax = subtotal * TAX_RATE;
+  return subtotal + tax;
+}
+
+
+async function calculateOrderItemsSubtotal(order) {
+
+  const orderItems = await OrderItem.find({ order: order.id });
+
+  let orderSubtotal = 0;
+
+  orderItems.forEach(i => {
+    const itemSubtotal = i.price * i.quantity;
+    orderSubtotal += itemSubtotal
+  });
+
+  return orderSubtotal;
+}
+
+
 module.exports = orderService;
 module.exports.buildOrderQueryFilter = buildOrderQueryFilter;
 module.exports.buildSortFilter = buildSortFilter;
+module.exports.TAX_RATE = TAX_RATE;
+module.exports.calculateTotalAmount = calculateTotalAmount;

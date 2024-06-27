@@ -11,6 +11,7 @@ const indexRouter = require('./src/routes/index');
 const usersRouter = require('./src/routes/users');
 const ordersRouter = require('./src/routes/orders');
 const authRouter = require('./src/routes/auth');
+const dashboardRouter = require('./src/routes/dashboard');
 
 
 const authMiddleware = require("./src/middlewares/authMiddleware");
@@ -27,7 +28,7 @@ connectDB();
 app.set('views', path.join(__dirname, 'src', 'views'));
 app.set('view engine', 'jade');
 
-app.use(logger('dev'));
+// app.use(logger('dev'));
 app.use(cors({ origin: "*" }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
@@ -43,6 +44,7 @@ app.use('/', indexRouter);
 app.use('/users', usersRouter);
 app.use('/orders', ordersRouter);
 app.use('/auth', authRouter);
+app.use('/dashboard', dashboardRouter);
 
 
 // Set default error handler middlewares.
