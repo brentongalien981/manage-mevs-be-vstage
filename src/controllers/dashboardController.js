@@ -1,7 +1,8 @@
 const { dashboardService, getNumOfProcessingOrdersFromOrdersData } = require("../services/dashboardService");
 
 const dashboardController = {
-  query: async (req, res) => {
+  query: async (req, res, next) => {
+
 
     try {
 

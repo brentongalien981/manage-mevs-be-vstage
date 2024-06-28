@@ -20,7 +20,10 @@ const dashboardService = {
     // Get orders data for previous date range.
     const ordersDataForPreviousDateRange = await getOrdersDataForDateRange(previousRangeStartDateStr, previousRangeEndDateStr);
 
-    return { ordersDataForCurrentDateRange, ordersDataForPreviousDateRange }
+    return {
+      ordersDataForCurrentDateRange: await reduceOrdersData(ordersDataForCurrentDateRange),
+      ordersDataForPreviousDateRange: await reduceOrdersData(ordersDataForPreviousDateRange)
+    }
   }
 };
 

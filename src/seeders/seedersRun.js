@@ -5,6 +5,7 @@ const { seedOrderStatus } = require("./orderStatusSeeder");
 const { seedCategory } = require("./categorySeeder");
 const { seedProduct } = require("./productSeeder");
 const { seedOrder } = require("./orderSeeder");
+const { seedAdmin } = require("./adminSeeder");
 
 
 const seederFuncs = [
@@ -13,6 +14,7 @@ const seederFuncs = [
   seedCategory,
   seedProduct,
   seedOrder,
+  seedAdmin
 ];
 
 
