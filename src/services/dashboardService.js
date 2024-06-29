@@ -57,7 +57,7 @@ async function getOrdersDataForDateRange(rangeStartDateStr, rangeEndDateStr) {
 
   const ordersDataForDateRange = await Order.find({
     createdAt: { $gte: rangeStartDateTimeStr, $lte: rangeEndDateTimeStr }
-  });
+  }).sort({ createdAt: "asc" });
   return ordersDataForDateRange;
 }
 
@@ -72,6 +72,7 @@ async function reduceOrdersData(orders) {
     reducedOrders.push({
       statusName: orderStatus.name,
       totalAmount: (await calculateTotalAmount(order)),
+      country: order.country,
       createdAt: order.createdAt
     });
   }

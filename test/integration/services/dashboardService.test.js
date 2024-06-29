@@ -103,7 +103,7 @@ describe("Integration / Service / dashboardService", () => {
       const reducedOrdersData = await reduceOrdersData(orders);
 
       for (const order of reducedOrdersData) {
-        // Expect these properties to be removed.
+        // Expect these (and other) properties to be removed.
         expect(order.id).to.be.undefined;
         expect(order.firstName).to.be.undefined;
         expect(order.orderStatus).to.be.undefined;
@@ -112,6 +112,7 @@ describe("Integration / Service / dashboardService", () => {
         expect(order.createdAt).to.exist;
         expect(order.statusName).to.exist;
         expect(order.totalAmount).to.exist;
+        expect(order.country).to.exist;
       }
 
     });

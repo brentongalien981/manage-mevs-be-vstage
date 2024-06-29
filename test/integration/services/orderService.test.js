@@ -569,8 +569,7 @@ describe("Integration / Services / orderService", () => {
 
 
         // Call the service.
-        let calculatedTotalAmount = await orderService.calculateTotalAmount(generatedOrder);
-        calculatedTotalAmount = parseFloat(calculatedTotalAmount.toFixed(2));
+        const calculatedTotalAmount = await orderService.calculateTotalAmount(generatedOrder);        
 
         // Expect 
         expect(total).equals(calculatedTotalAmount);

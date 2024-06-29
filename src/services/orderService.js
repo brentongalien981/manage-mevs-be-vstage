@@ -127,7 +127,8 @@ async function calculateTotalAmount(order) {
   let subtotal = await calculateOrderItemsSubtotal(order);
   subtotal += order.shippingFee;
   const tax = subtotal * TAX_RATE;
-  return subtotal + tax;
+  const total = subtotal + tax;
+  return parseFloat(total.toFixed(2));
 }
 
 
