@@ -3,98 +3,105 @@ const { generateDefaultCollections } = require("../../../src/factories/mainFacto
 const { generateOrders } = require("../../../src/factories/orderFactory");
 const Order = require("../../../src/models/order");
 const My = require("../../../src/utils/My");
-const orderService = require("../../../src/services/orderService");
 const { getRandomOrderStatus } = require("../../../src/factories/orderStatusFactory");
 const OrderStatus = require("../../../src/models/orderStatus");
-const { buildSortFilter } = require("../../../src/services/orderService");
+const { buildSortFilter, buildAggregateFilters } = require("../../../src/services/orderService");
 const OrderItem = require("../../../src/models/orderItem");
+const orderService = require("../../../src/services/orderService");
 require("../../setup");
 const { expect } = chai;
-
 
 
 describe("Integration / Services / orderService", () => {
 
 
-  describe("orderService.buildOrderQueryFilter", () => {
+  describe("orderService.buildAggregateFilters", () => {
 
-    it("should build query filter based on request order query filters", async () => {
+    it("should build aggregate filters based on request order filters url query", async () => {
 
       // Mocks
       const orderFilters = [
-        { name: "orderId", value: "fake-order-id-123", sortOrder: "none" },
-        { name: "userId", value: "fake-user-id-456", sortOrder: "none" },
+        { name: "orderId", value: "fake-order-id-1", sortOrder: "none" },
         { name: "firstName", value: "John", sortOrder: "none" },
         { name: "city", value: "Boston", sortOrder: "none" },
       ];
 
 
       // Call the service.
-      const builtQueryFilter = await orderService.buildOrderQueryFilter(orderFilters);
+      const builtAggregateFilter = await buildAggregateFilters(orderFilters);
+      let numTestedFilters = 0;
 
 
-      // Expect
-      const firstNameRegex = new RegExp("John", "i");
-      expect(builtQueryFilter._id).equals("fake-order-id-123");
-      expect(builtQueryFilter.firstName.toString()).equals(firstNameRegex.toString());
-
-      // Assert all properties.
+      // Assert
       orderFilters.forEach(filter => {
 
         const filterName = filter.name;
         const filterValue = filter.value;
+        const filterRegexValue = new RegExp(filterValue, "i").toString();
 
-        if (filterName === "orderId") {
-          // For order-id, just compare the plain value and not a regex value.
-          expect(builtQueryFilter._id).equals("fake-order-id-123");
-        } else {
-          const filterRegexValue = new RegExp(filterValue, "i");
+        // Assert
+        for (const aggregateFilter of builtAggregateFilter) {
 
-          expect(builtQueryFilter[filterName].toString()).equals(filterRegexValue.toString());
+          // Assert for the special case "orderId".
+          if (filterName === "orderId") {
+            expect(aggregateFilter.idStr.$regex.toString()).equals(filterRegexValue);
+            numTestedFilters++;
+            break;
+          }
+
+          // Assert for the rest of the filters.
+          if (aggregateFilter.hasOwnProperty(filterName)) {
+            expect(aggregateFilter[filterName].$regex.toString()).equals(filterRegexValue);
+            numTestedFilters++;
+            break;
+          }
+
         }
       });
 
-    });
+      expect(numTestedFilters).equals(orderFilters.length);
 
-
-    it("should omit the order-id filter if it is empty when building query filter", async () => {
-
-      // Mocks
-      const orderFilters = [
-        { name: "orderId", value: "", sortOrder: "none" },
-        { name: "firstName", value: "John", sortOrder: "none" },
-      ];
-
-
-      // Call the service.
-      const builtQueryFilter = await orderService.buildOrderQueryFilter(orderFilters);
-
-
-      // Expect
-      const firstNameRegex = new RegExp("John", "i");
-      expect(builtQueryFilter._id).to.be.undefined;
-      expect(builtQueryFilter.firstName.toString()).equals(firstNameRegex.toString());
 
     });
 
 
-    it("should add the createdAt property when building the order query filter", async () => {
+    it("should add the createdAt property when building the order aggregate filter", async () => {
 
       // Mocks
       const orderFilters = [
-        { name: "firstName", value: "John", sortOrder: "none" },
         { name: "orderDateStart", value: "2024-01-01", sortOrder: "none" },
         { name: "orderDateEnd", value: "2024-01-05", sortOrder: "none" },
       ];
 
 
       // Call the service.
-      const builtQueryFilter = await orderService.buildOrderQueryFilter(orderFilters);
+      const builtAggregateFilter = await buildAggregateFilters(orderFilters);
 
 
-      // Expect
-      expect(builtQueryFilter.createdAt.$gte).equals("2024-01-01");
-      expect(builtQueryFilter.createdAt.$lte).equals("2024-01-05");
+      // Assert
+      let numTestedFilters = 0;
+      const filterName = "createdAt";
+
+      for (const aggregateFilter of builtAggregateFilter) {
+
+        // Assert for the rest of the filters.
+        if (aggregateFilter.hasOwnProperty(filterName)) {
+
+          if (aggregateFilter[filterName].$gte) {
+            expect(aggregateFilter[filterName].$gte.getTime()).equals((new Date("2024-01-01")).getTime());
+            numTestedFilters++;
+          }
+
+          if (aggregateFilter[filterName].$lte) {
+            expect(aggregateFilter[filterName].$lte.getTime()).equals((new Date("2024-01-05")).getTime());
+            numTestedFilters++;
+          }
+
+        }
+
+      }
+
+      expect(numTestedFilters).equals(orderFilters.length);
 
     });
 
@@ -124,7 +131,7 @@ describe("Integration / Services / orderService", () => {
 
 
       // Call the service.
-      const queriedOrders = await orderService.queryOrders(mockReqQueryObj);
+      const { orders } = await orderService.queryOrders(mockReqQueryObj);
 
 
       // Query other stuffs.
@@ -133,10 +140,9 @@ describe("Integration / Services / orderService", () => {
 
       // Expect
       expect(numAllOrders).to.equal(10);
-      expect(queriedOrders.length).equals(1);
-      expect(queriedOrders[0].id).equals(randomOrder.id);
-      expect(queriedOrders[0].firstName).equals(randomOrder.firstName);
-      expect(queriedOrders[0].city).equals(randomOrder.city);
+      expect(orders.length).equals(1);
+      expect(orders[0].firstName).equals(randomOrder.firstName);
+      expect(orders[0].city).equals(randomOrder.city);
 
     });
 
@@ -166,8 +172,8 @@ describe("Integration / Services / orderService", () => {
       };
 
 
-      // Call the service.s
-      const queriedOrders = await orderService.queryOrders(mockReqQueryObj);
+      // Call the service.
+      const { orders } = await orderService.queryOrders(mockReqQueryObj);
 
 
       // Query other stuffs.
@@ -176,9 +182,48 @@ describe("Integration / Services / orderService", () => {
 
       // Expect
       expect(numAllOrders).to.equal(11);
-      expect(queriedOrders.length).equals(1);
-      expect(queriedOrders[0].firstName).equals(randomOrder1.firstName);
-      expect(queriedOrders[0].city).equals(randomOrder1.city);
+      expect(orders.length).equals(1);
+      expect(orders[0].firstName).equals(randomOrder1.firstName);
+      expect(orders[0].city).equals(randomOrder1.city);
+
+    });
+
+
+    it("should return orders based on the orderId filter", async () => {
+    
+      // Generate relevant objects.
+      await generateDefaultCollections();
+      // Generate 10 random orders.
+      await generateOrders(10);
+      // Generate an order as reference.
+      const randomOrder = (await generateOrders(1, {
+        firstName: "fake-name1"
+      }))[0];
+
+
+      // Mocks
+      const orderIdSubstr = randomOrder.id.substring(5);
+
+      const mockReqQueryObj = {
+        ordersFilters: [
+          { name: "orderId", value: orderIdSubstr, sortOrder: "none" }
+        ],
+        pageNavigatorData: { page: 1 }
+      };
+
+
+      // Call the service.
+      const { orders } = await orderService.queryOrders(mockReqQueryObj);
+
+
+      // Query other stuffs.
+      const numAllOrders = await Order.countDocuments({});
+
+
+      // Expect
+      expect(numAllOrders).to.equal(11);
+      expect(orders.length).equals(1);
+      expect(orders[0].firstName).equals(randomOrder.firstName);
 
     });
 
@@ -200,8 +245,8 @@ describe("Integration / Services / orderService", () => {
       };
 
 
-      // Call the service.s
-      const queriedOrders = await orderService.queryOrders(mockReqQueryObj);
+      // Call the service.
+      const { orders } = await orderService.queryOrders(mockReqQueryObj);
 
 
       // Query other stuffs.
@@ -210,7 +255,7 @@ describe("Integration / Services / orderService", () => {
 
       // Expect
       expect(numAllOrders).to.equal(10);
-      expect(queriedOrders.length).equals(10);
+      expect(orders.length).equals(10);
 
     });
 
@@ -239,8 +284,8 @@ describe("Integration / Services / orderService", () => {
       };
 
 
-      // Call the service.s
-      const queriedOrders = await orderService.queryOrders(mockReqQueryObj);
+      // Call the service.
+      const { orders } = await orderService.queryOrders(mockReqQueryObj);
 
 
       // Query other stuffs.
@@ -249,9 +294,9 @@ describe("Integration / Services / orderService", () => {
 
       // Expect
       expect(numAllOrders).to.equal(23);
-      expect(queriedOrders.length).to.be.greaterThanOrEqual(3);
+      expect(orders.length).to.be.greaterThanOrEqual(3);
 
-      queriedOrders.forEach(order => {
+      orders.forEach(order => {
         expect(order.orderStatus.name).equals(orderStatusForPaymentReceived.name);
         expect(order.orderStatus.value).equals(orderStatusForPaymentReceived.value);
       });
@@ -298,8 +343,8 @@ describe("Integration / Services / orderService", () => {
       };
 
 
-      // Call the service.s
-      const queriedOrders = await orderService.queryOrders(mockReqQueryObj);
+      // Call the service.
+      const { orders } = await orderService.queryOrders(mockReqQueryObj);
 
 
       // Query other stuffs.
@@ -308,7 +353,7 @@ describe("Integration / Services / orderService", () => {
 
       // Expect
       expect(numAllOrders).to.equal(26);
-      expect(queriedOrders.length).equals(6);
+      expect(orders.length).equals(6);
     });
 
 
@@ -334,14 +379,14 @@ describe("Integration / Services / orderService", () => {
       };
 
 
-      // Call the service.s
-      const queriedOrders = await orderService.queryOrders(mockReqQueryObj);
+      // Call the service.
+      const { orders } = await orderService.queryOrders(mockReqQueryObj);
 
 
       // Expect
-      expect(queriedOrders.length).to.be.greaterThanOrEqual(3);
+      expect(orders.length).to.be.greaterThanOrEqual(3);
 
-      queriedOrders.forEach(order => {
+      orders.forEach(order => {
         expect(order.orderStatus).to.not.be.null;
         expect(order.orderStatus.name).equals(randomOrderStatus.name);
         expect(order.orderStatus.value).equals(randomOrderStatus.value);
@@ -371,8 +416,8 @@ describe("Integration / Services / orderService", () => {
       };
 
 
-      // Call the service.s
-      const queriedOrders = await orderService.queryOrders(mockReqQueryObj);
+      // Call the service.
+      const { orders } = await orderService.queryOrders(mockReqQueryObj);
 
 
       // Query other stuffs.
@@ -382,9 +427,9 @@ describe("Integration / Services / orderService", () => {
       // Expect
       expect(numAllOrders).to.equal(20);
       // Expect that querying for orders with firstNameFilter "Jo" and pageNum = 2 returns only 2 orders.
-      expect(queriedOrders.length).equals(2);
+      expect(orders.length).equals(2);
 
-      queriedOrders.forEach(order => {
+      orders.forEach(order => {
         expect(order.firstName).equals("John");
       });
 
@@ -419,7 +464,7 @@ describe("Integration / Services / orderService", () => {
 
 
       // Call the service.
-      const queriedOrders = await orderService.queryOrders(mockReqQueryObj);
+      const { orders } = await orderService.queryOrders(mockReqQueryObj);
 
       // Query other stuffs.
       const numAllOrders = await Order.countDocuments({});
@@ -427,16 +472,16 @@ describe("Integration / Services / orderService", () => {
 
       // Expect
       expect(numAllOrders).to.equal(25);
-      expect(queriedOrders.length).equals(5);
+      expect(orders.length).equals(5);
 
-      for (let i = 0; i < queriedOrders.length; i++) {
-        const currentOrder = queriedOrders[i];
+      for (let i = 0; i < orders.length; i++) {
+        const currentOrder = orders[i];
 
         if (i === 0) {
           continue;
         }
 
-        const previousOrder = queriedOrders[i - 1];
+        const previousOrder = orders[i - 1];
 
         let myBool = currentOrder.firstName >= previousOrder.firstName;
         expect(myBool).equals(true); // ascending
@@ -448,10 +493,6 @@ describe("Integration / Services / orderService", () => {
 
     });
 
-  });
-
-
-  describe("orderService.getOrdersCountWithFilters", () => {
 
     it("should return the count of orders based on given order filters", async () => {
 
@@ -465,14 +506,17 @@ describe("Integration / Services / orderService", () => {
 
       // Mocks
       const firstNameFilterPhrase = "Jo";
-      const ordersFilters = [
-        { name: "firstName", value: firstNameFilterPhrase, sortOrder: "none" },
-        { name: "city", value: "", sortOrder: "none" },
-      ];
+      const mockReqQueryObj = {
+        ordersFilters: [
+          { name: "firstName", value: firstNameFilterPhrase, sortOrder: "none" },
+          { name: "city", value: "", sortOrder: "none" },
+        ],
+        pageNavigatorData: { page: 1 }
+      };
 
 
-      // Call the service.s
-      const count = await orderService.getOrdersCountWithFilters(ordersFilters);
+      // Call the service.
+      const { orders, ordersCountWithFilters } = await orderService.queryOrders(mockReqQueryObj);
 
 
       // Query other stuffs.
@@ -481,7 +525,8 @@ describe("Integration / Services / orderService", () => {
 
       // Expect
       expect(numAllOrders).to.equal(20);
-      expect(count).equals(12);
+      expect(ordersCountWithFilters).equals(12);
+      expect(orders.length).equals(10);
 
     });
 
@@ -569,7 +614,7 @@ describe("Integration / Services / orderService", () => {
 
 
         // Call the service.
-        const calculatedTotalAmount = await orderService.calculateTotalAmount(generatedOrder);        
+        const calculatedTotalAmount = await orderService.calculateTotalAmount(generatedOrder);
 
         // Expect 
         expect(total).equals(calculatedTotalAmount);

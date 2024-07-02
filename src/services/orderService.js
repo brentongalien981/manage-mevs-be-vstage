@@ -12,59 +12,65 @@ const orderService = {
 
   queryOrders: async function (reqQueryObj) {
 
-    const queryFilters = await buildOrderQueryFilter(reqQueryObj.ordersFilters);
+    const aggregateFilters = await buildAggregateFilters(reqQueryObj.ordersFilters);
     const sortFilters = buildSortFilter(reqQueryObj.sortFilters);
     const numDataToSkip = getNumDataToSkip(reqQueryObj.pageNavigatorData);
 
-    const queriedOrders = await Order.find(queryFilters)
-      .populate({
-        path: "orderStatus",
-        select: "name value -_id"
-      })
-      .sort(sortFilters)
-      .skip(numDataToSkip)
-      .limit(NUM_DATA_PER_PAGE)
-      .exec();
+    // Prepare the aggregate pipelines.
+    const ordersCountPipeline = [
+      {
+        // Convert ObjectId fields to string for comparison.
+        $addFields: {
+          idStr: { $toString: "$_id" },
+          orderStatusStr: { $toString: "$orderStatus" }
+        }
+      },
+      { $match: { $and: aggregateFilters } }
+    ];
 
-    return queriedOrders;
-  },
+    const ordersDataPipeline = [
+      ...ordersCountPipeline,
+      { $sort: sortFilters },
+      { $skip: numDataToSkip },
+      { $limit: NUM_DATA_PER_PAGE }
+    ];
 
+    const ordersCountWithFilters = (await Order.aggregate(ordersCountPipeline)).length;
+    let orders = await Order.aggregate(ordersDataPipeline);
 
-  getOrdersCountWithFilters: async function (ordersFilters) {
+    // Modify orders to include Order Status.
+    for (let i = 0; i < orders.length; i++) {
+      const orderStatus = await OrderStatus.findById(orders[i].orderStatus);
+      orders[i].orderStatus = orderStatus;
+    }
 
-    const queryFilters = await buildOrderQueryFilter(ordersFilters);
-    const count = await Order.countDocuments(queryFilters);
-    return count;
+    return { orders, ordersCountWithFilters };
   }
 
 };
 
 
-async function buildOrderQueryFilter(orderFilters) {
 
-  const builtQueryFilter = {};
+async function buildAggregateFilters(ordersFilters) {
 
-  for (let i = 0; i < orderFilters.length; i++) {
+  const aggregateFilters = [];
+  // Use this order status as reference.
+  const placeholderOrderStatus = await OrderStatus.findOne({ name: "SELECT_ORDER_STATUS" });
 
-    const filter = orderFilters[i];
-    const filterName = filter.name;
-    const filterValue = filter.value;
+  for (let i = 0; i < ordersFilters.length; i++) {
+
+    const filter = ordersFilters[i];
+    let filterName = filter.name;
+    let filterValue = filter.value;
 
     switch (filterName) {
       case "orderId":
-        // For empty orderId value, skip including the filter.
-        if (filterValue.trim() === "") {
-          continue;
-        }
-
-        // For order-id, just use the plain value and not a regex value.
-        builtQueryFilter._id = filterValue;
+        filterName = "idStr";
         break;
       case "orderStatus":
         // For order-status, query for the ObjectId of the provided order-status based on
         // its value.
         const theOrderStatus = (await OrderStatus.find({ value: filterValue }))[0];
-        const placeholderOrderStatus = await OrderStatus.findOne({ name: "SELECT_ORDER_STATUS" });
 
         // Don't include the orderStatus as filter if the "SELECT_ORDER_STATUS" orderStatus is chosen.
         if (theOrderStatus.value == placeholderOrderStatus.value) {
@@ -72,23 +78,28 @@ async function buildOrderQueryFilter(orderFilters) {
         }
 
         // Otherwise, build and include the orderStatus filter.
-        builtQueryFilter.orderStatus = theOrderStatus._id;
+        filterName = "orderStatusStr";
+        filterValue = theOrderStatus.id;
         break;
       case "orderDateStart":
-        builtQueryFilter.createdAt = { ...builtQueryFilter.createdAt, $gte: filterValue };
+        filterName = "createdAt";
+        filterValue = { $gte: new Date(filterValue) };
+        aggregateFilters.push({ [filterName]: filterValue });
+        continue;
         break;
       case "orderDateEnd":
-        builtQueryFilter.createdAt = { ...builtQueryFilter.createdAt, $lte: filterValue };
-        break;
-      default:
-        // The rest of the filters can be used with Regex.
-        builtQueryFilter[filterName] = new RegExp(filterValue, "i");
+        filterName = "createdAt";
+        filterValue = { $lte: new Date(filterValue) };
+        aggregateFilters.push({ [filterName]: filterValue });
+        continue;
         break;
     }
 
+    aggregateFilters.push({ [filterName]: { $regex: new RegExp(filterValue, "i") } });
+
   }
 
-  return builtQueryFilter;
+  return aggregateFilters;
 }
 
 
@@ -148,7 +159,7 @@ async function calculateOrderItemsSubtotal(order) {
 
 
 module.exports = orderService;
-module.exports.buildOrderQueryFilter = buildOrderQueryFilter;
+module.exports.buildAggregateFilters = buildAggregateFilters;
 module.exports.buildSortFilter = buildSortFilter;
 module.exports.TAX_RATE = TAX_RATE;
 module.exports.calculateTotalAmount = calculateTotalAmount;

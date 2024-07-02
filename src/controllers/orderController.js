@@ -13,8 +13,7 @@ const orderController = {
 
     try {
 
-      const orders = await orderService.queryOrders(reqQueryObj);
-      const ordersCountWithFilters = await orderService.getOrdersCountWithFilters(reqQueryObj.ordersFilters);
+      const { orders, ordersCountWithFilters } = await orderService.queryOrders(reqQueryObj);
 
       res.json({
         msg: "Request OK for GET route: /orders/queryOrders",
