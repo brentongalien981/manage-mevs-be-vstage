@@ -45,6 +45,29 @@ const orderService = {
     }
 
     return { orders, ordersCountWithFilters };
+  },
+
+  updateOrder: async function (req) {
+
+    const orderId = req.params.orderId;
+    const orderData = req.body;
+    const sanitizedOrderData = {};
+
+    // Set the sanitized order data.
+    for (const key in orderData) {
+      if (key === "orderStatusValue") {
+        const orderStatus = await OrderStatus.findOne({ value: orderData.orderStatusValue });
+        sanitizedOrderData.orderStatus = orderStatus._id;
+      } else {
+        sanitizedOrderData[key] = orderData[key];
+      }
+    }
+
+    // Validate and update the order.
+    const updatedOrder = await Order.findByIdAndUpdate(orderId, sanitizedOrderData, { runValidators: true, new: true });
+
+    return updatedOrder;
+
   }
 
 };
