@@ -5,7 +5,7 @@ const app = require("../../../../app");
 const spies = require("chai-spies");
 const My = require("../../../../src/utils/My");
 const MyMultipleValidationErrors = require("../../../../src/errors/MyMultipleValidationErrors");
-const { SIGNUP_KEY_EQUALITY_VALIDATION_ERROR_MSG, PASSWORD_REGEX_VALIDATION_ERROR_MSG } = require("../../../../src/utils/validators/UserValidator");
+const { SIGNUP_KEY_EQUALITY_VALIDATION_ERROR_MSG, PASSWORD_REGEX_VALIDATION_ERROR_MSG } = require("../../../../src/utils/validators/userValidator");
 const MyExpressValidatorError = require("../../../../src/errors/MyExpressValidatorError");
 
 chai.use(chaiHttp);

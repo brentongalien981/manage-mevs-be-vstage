@@ -15,7 +15,7 @@ const authService = {
     });
 
     // Generate JWT token.
-    const token = jwt.sign({ email: newAdmin.email }, process.env.JWT_SECRET, { expiresIn: "7d" });
+    const token = jwt.sign({ id: newAdmin.id, email: newAdmin.email }, process.env.JWT_SECRET, { expiresIn: "7d" });
 
     return {
       email: newAdmin.email,
@@ -36,7 +36,7 @@ const authService = {
 
       if (isPasswordValid) {
         // Generate JWT token.
-        token = jwt.sign({ email }, process.env.JWT_SECRET, { expiresIn: "7d" });
+        token = jwt.sign({ id: admin.id, email }, process.env.JWT_SECRET, { expiresIn: "7d" });
       }
     }
 

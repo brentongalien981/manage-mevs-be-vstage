@@ -1,6 +1,6 @@
 const { body, validationResult } = require("express-validator");
 const multipleErrorsErrorHandlerMiddleware = require("../multipleErrorsErrorHandlerMiddleware");
-const { signupKeyEqualityValidator, SIGNUP_KEY_EQUALITY_VALIDATION_ERROR_MSG, passwordRegexValidator, PASSWORD_REGEX_VALIDATION_ERROR_MSG } = require("../../utils/validators/UserValidator");
+const { signupKeyEqualityValidator, SIGNUP_KEY_EQUALITY_VALIDATION_ERROR_MSG, passwordRegexValidator, PASSWORD_REGEX_VALIDATION_ERROR_MSG } = require("../../utils/validators/userValidator");
 const MyExpressValidatorError = require("../../errors/MyExpressValidatorError");
 
 const authValidation = {
