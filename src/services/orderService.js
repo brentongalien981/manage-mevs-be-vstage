@@ -48,7 +48,6 @@ const orderService = {
   },
 
   updateOrder: async function (req) {
-
     const orderId = req.params.orderId;
     const orderData = req.body;
     const sanitizedOrderData = {};
