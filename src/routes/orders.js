@@ -6,6 +6,7 @@ var router = express.Router();
 
 router.get("/queryOrders", orderController.queryOrders);
 router.get("/:orderId", orderController.getOrder);
+router.post("/buyShippingLabel", authMiddleware.isLoggedIn, orderController.buyShippingLabel);
 router.put("/:orderId", authMiddleware.isLoggedIn, orderController.updateOrder);
 
 module.exports = router;

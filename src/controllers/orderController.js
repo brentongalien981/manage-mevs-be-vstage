@@ -90,6 +90,20 @@ const orderController = {
       next(e);
     }
 
+  },
+
+  buyShippingLabel: async function (req, res, next) {
+    try {
+
+      // TODO: Buy shipping label here.
+
+      res.json({
+        msg: `Request OK for POST route: /orders/buyShippingLabel`        
+      });
+    } catch (e) {
+      // Handle errors.
+      next(e);
+    }
   }
 };
 
