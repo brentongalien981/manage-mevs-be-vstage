@@ -1,7 +1,12 @@
+const { getOrder } = require("../controllers/orderController");
+const Brand = require("../models/brand");
+const Category = require("../models/category");
 const Order = require("../models/order");
 const OrderItem = require("../models/orderItem");
 const OrderStatus = require("../models/orderStatus");
+const Product = require("../models/product");
 const My = require("../utils/My");
+const epShipmentService = require("./epShipmentService");
 
 
 const NUM_DATA_PER_PAGE = 10;
@@ -67,6 +72,57 @@ const orderService = {
 
     return updatedOrder;
 
+  },
+
+  getOrder: async function (orderId) {
+
+    let order = await Order.findById(orderId)
+      .populate("orderStatus")
+      .populate({
+        path: 'orderItems', // Populate orderItems
+        populate: {
+          path: 'product', // Further populate product within each orderItem
+          model: Product,
+          populate: [
+            {
+              path: 'brand', // Populate brand within each product
+              model: Brand,
+              select: 'name' // Only include the name field of brand
+            },
+            {
+              path: 'category', // Populate category within each product
+              model: Category,
+              select: 'name' // Only include the name field of category
+            }
+          ]
+
+        }
+      });
+
+    order = order.toJSON();
+
+    // Try to find the EasyPost shipment details.
+    const shipmentInfo = await epShipmentService.getShipmentDetails(order.shipmentId);
+    if (shipmentInfo) {
+      // If shipment details are found, dynamically add those properties to the order object.
+      order.shipmentLabelUrl = shipmentInfo.shipmentLabelUrl;
+      order.trackingUrl = shipmentInfo.trackingUrl;
+    }
+
+    return order;
+  },
+
+  buyShippingLabel: async function (req) {
+
+    // Buy the EasyPost shipment label.
+    const shipmentInfo = await epShipmentService.buyShippingLabel(req);
+
+    // Update the order's shipmentId to the bought shipment.
+    const order = await Order.findById(req.body.orderId);
+    order.shipmentId = shipmentInfo.shipmentId;
+    await order.save();
+
+    return shipmentInfo;
   }
 
 };

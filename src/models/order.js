@@ -27,6 +27,12 @@ const orderSchema = new mongoose.Schema({
 }, { timestamps: true });
 
 
+/** Instance Methods */
+orderSchema.methods.getCustomerFullName = function () {
+  return `${this.firstName} ${this.lastName}`;
+};
+
+
 const Order = mongoose.model("Order", orderSchema);
 
 module.exports = Order;

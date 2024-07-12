@@ -190,7 +190,7 @@ describe("Integration / Services / orderService", () => {
 
 
     it("should return orders based on the orderId filter", async () => {
-    
+
       // Generate relevant objects.
       await generateDefaultCollections();
       // Generate 10 random orders.
@@ -619,6 +619,41 @@ describe("Integration / Services / orderService", () => {
         // Expect 
         expect(total).equals(calculatedTotalAmount);
       }
+    });
+
+  });
+
+
+
+  describe("orderService.buyShippingLabel", () => {
+
+    it("should set the shipmentId of the order equal to the bought EasyPost shipment id", async () => {
+
+      // Generate relevant objects.
+      await generateDefaultCollections();
+      const generatedOrders = await generateOrders(1);
+      const randomOrder = generatedOrders[0];
+
+
+      // Mock relevant variables.
+      const mockReq = {
+        body: {
+          orderId: randomOrder.id
+        }
+      };
+
+
+      // Call the service.
+      const response = await orderService.buyShippingLabel(mockReq);
+
+      // Query the order.
+      const queriedOrder = await Order.findById(randomOrder.id);
+
+
+      // Expect
+      expect(randomOrder.id).equals(queriedOrder.id);
+      expect(queriedOrder.shipmentId).equals(response.shipmentId);
+
     });
 
   });
