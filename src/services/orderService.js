@@ -99,6 +99,8 @@ const orderService = {
         }
       });
 
+    // Convert the order to JSON in order to dynamically attach relevant
+    // EasyPost shipment properties.
     order = order.toJSON();
 
     // Try to find the EasyPost shipment details.
