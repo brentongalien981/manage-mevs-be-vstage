@@ -1,0 +1,5 @@
+// Build remote-staging image.
+docker build -f dockerfiles/react.dockerfile -t odox700/org-ydotcom-fe:staging-2.0 .
+
+// Run remote-staging container.
+docker run -d -p 280:80 --name org-ydotcom-fe odox700/org-ydotcom-fe:staging-2.0

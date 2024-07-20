@@ -1,0 +1,21 @@
+// Remove container (force and remove volume)
+docker container rm -f -v org-manage-mevs-be
+
+// Remove old local-staging image.
+docker image rm odox700/org-manage-mevs-be:local-stage-1.0
+
+
+// Build local-staging image.
+docker build -t odox700/org-manage-mevs-be:local-stage-1.0 -f dockerfiles/local-staging.dockerfile .
+
+
+// Push image to docker hub
+docker push odox700/org-manage-mevs-be:local-stage-1.0
+
+
+// Run local-staging container.
+docker run -d -p 53008:80 --name org-manage-mevs-be odox700/org-manage-mevs-be:local-stage-1.0
+// OR
+docker run -d -p 53008:80 --env-file env/local-staging.env --name org-manage-mevs-be odox700/org-manage-mevs-be:local-stage-1.0
+
+

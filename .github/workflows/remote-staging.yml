@@ -1,0 +1,87 @@
+name: Remote Staging Workflow
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - staging
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v1
+
+      - name: Create Environment File
+        run: |
+          echo "NODE_ENV=${{ secrets.NODE_ENV }}" >> staging.env
+          echo "FRONTEND_URL=${{ secrets.FRONTEND_URL }}" >> staging.env
+          echo "PORT=${{ secrets.PORT }}" >> staging.env
+          echo "DB_HOST=${{ secrets.DB_HOST }}" >> staging.env
+          echo "DB_PORT=${{ secrets.DB_PORT }}" >> staging.env
+          echo "DB_NAME=${{ secrets.DB_NAME }}" >> staging.env
+          echo "TEST_EASYPOST_API_KEY=${{ secrets.TEST_EASYPOST_API_KEY }}" >> staging.env
+          echo "PRODUCTION_EASYPOST_API_KEY=${{ secrets.PRODUCTION_EASYPOST_API_KEY }}" >> staging.env
+          echo "EASYPOST_API_KEY=${{ secrets.EASYPOST_API_KEY }}" >> staging.env
+          echo "DEFAULT_ADMIN_EMAIL=${{ secrets.DEFAULT_ADMIN_EMAIL }}" >> staging.env
+          echo "DEFAULT_ADMIN_PASSWORD=${{ secrets.DEFAULT_ADMIN_PASSWORD }}" >> staging.env
+          echo "EP_COMPANY_ADDRESS_STREET=${{ secrets.EP_COMPANY_ADDRESS_STREET }}" >> staging.env
+          echo "EP_COMPANY_ADDRESS_CITY=${{ secrets.EP_COMPANY_ADDRESS_CITY }}" >> staging.env
+          echo "EP_COMPANY_ADDRESS_PROVINCE=${{ secrets.EP_COMPANY_ADDRESS_PROVINCE }}" >> staging.env
+          echo "EP_COMPANY_ADDRESS_POSTAL_CODE=${{ secrets.EP_COMPANY_ADDRESS_POSTAL_CODE }}" >> staging.env
+          echo "EP_COMPANY_ADDRESS_COUNTRY=${{ secrets.EP_COMPANY_ADDRESS_COUNTRY }}" >> staging.env
+          echo "EP_COMPANY_NAME=${{ secrets.EP_COMPANY_NAME }}" >> staging.env
+          echo "EP_COMPANY_PHONE_NUM=${{ secrets.EP_COMPANY_PHONE_NUM }}" >> staging.env
+          echo "JWT_SECRET=${{ secrets.JWT_SECRET }}" >> staging.env
+          echo "SIGNUP_KEY=${{ secrets.SIGNUP_KEY }}" >> staging.env
+          echo "NGROK_TOKEN=${{ secrets.NGROK_TOKEN }}" >> staging.env
+
+      - name: Build Docker Image
+        run: docker build -f dockerfiles/remote-staging.dockerfile -t odox700/org-manage-mevs-be:remote-stage-1.0 .
+
+      - name: Push image to docker hub
+        run: docker push odox700/org-manage-mevs-be:remote-stage-1.0
+
+  deploy:
+    needs: build
+    runs-on: MyRunner2
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set docker user permissions
+        run: |
+          sudo usermod -aG docker $USER
+          newgrp docker
+          sudo chmod 777 /var/run/docker.sock
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Pull image from docker hub
+        run: docker pull odox700/org-manage-mevs-be:remote-stage-1.0
+
+      - name: Delete old container
+        run: docker rm -f org-manage-mevs-be
+
+      - name: Run Docker Container
+        run: |
+          docker run -d \
+          -p 4080:80 \
+          --name org-manage-mevs-be \
+          odox700/org-manage-mevs-be:remote-stage-1.0

@@ -1,0 +1,14 @@
+# Run ngrok agent.
+execute Documents / my-ngrok / ngrok.exe
+
+# Add authtoken
+ngrok config add-authtoken {{REPLACE-FROM-ENV-FILE-NGROK-TOKEN}}
+
+# Run ephemeral domain OR
+ngrok http http://localhost:8080
+
+# Run static domain
+ngrok http --domain=exact-mostly-mole.ngrok-free.app 3004
+
+# Domain
+https://exact-mostly-mole.ngrok-free.app
