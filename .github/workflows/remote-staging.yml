@@ -55,7 +55,7 @@ jobs:
 
   deploy:
     needs: build
-    runs-on: MyRunner2
+    runs-on: self-hosted
 
     steps:
       - name: Checkout code
